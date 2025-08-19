@@ -144,3 +144,7 @@
   scrollbar-width: thin;
   scrollbar-color: white transparent;
 }
+
+/* Utility: hide scrollbars visually but keep scrolling */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }

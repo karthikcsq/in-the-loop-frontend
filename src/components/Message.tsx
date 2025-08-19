@@ -12,7 +12,7 @@ export const Message = ({ message }: MessageProps) => {
     return (
       <div className="max-w-4xl mx-auto px-4 py-2">
         <div className="flex justify-end ml-[25%]">
-          <div className="bg-gray-900 border border-gray-700 text-white rounded-3xl px-5 py-3 max-w-full">
+          <div className="bg-secondary text-secondary-foreground rounded-3xl px-5 py-3 max-w-full">
             <div className="whitespace-pre-wrap break-words leading-relaxed">
               {message.content}
             </div>
@@ -25,9 +25,9 @@ export const Message = ({ message }: MessageProps) => {
     return (
       <div className="max-w-4xl mx-auto">
         {/* Separator line */}
-        <div className="border-t border-gray-800 mx-4 my-4"></div>
+        <div className="border-t border-border mx-4 my-4"></div>
         <div className="px-4 py-3">
-          <div className="text-white/90 leading-relaxed">
+          <div className="text-foreground/90 leading-relaxed">
             <div className="whitespace-pre-wrap break-words">
               {message.content}
             </div>

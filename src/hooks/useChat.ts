@@ -6,6 +6,7 @@ export const useChat = () => {
     messages: [],
     isLoading: false,
     error: null,
+    interrupt: null,
   });
   // Maintain a thread id per conversation for LangGraph
   const [threadId, setThreadId] = useState<string>(
@@ -27,6 +28,13 @@ export const useChat = () => {
         timestamp: new Date(),
       };
 
+  // Decide if this starts a new graph run or resumes an interrupt
+  const mode = state.interrupt ? 'resume' : 'start';
+
+  // Determine the thread id to send for this request (reuse existing thread unless user starts a New Chat)
+  let currentThreadId = threadId;
+
+      // Mark run as active
       setState((prev) => ({
         ...prev,
         messages: [...prev.messages, userMessage],
@@ -34,16 +42,13 @@ export const useChat = () => {
         error: null,
       }));
 
-      // Decide if this starts a new graph run or resumes an interrupt
-      const mode = state.messages.length === 0 ? 'start' : 'resume';
-
       try {
         const body: any = {
-          threadId,
+          threadId: currentThreadId,
           message: userMessage.content,
           mode,
         };
-        if (mode === 'start') {
+  if (mode === 'start') {
           // Only send taskType on the first message; omit if 'none'
           const t = taskType && taskType !== 'none' ? taskType : undefined;
           if (t) body.taskType = t;
@@ -61,6 +66,20 @@ export const useChat = () => {
           throw new Error(data.error || 'Failed to send message');
         }
 
+        // If backend asks an interrupt question, show transient prompt instead of adding a message
+        if (data.interrupt) {
+          setState((prev) => ({
+            ...prev,
+            isLoading: false,
+            interrupt: {
+              question: data.message?.content ?? 'I have a clarification question.',
+              options: data.options ?? null,
+            },
+          }));
+          return;
+        }
+
+        // Otherwise treat as a normal assistant message (final or non-interrupt)
         const assistantMessage: Message = {
           id: (Date.now() + 1).toString(),
           role: 'assistant',
@@ -72,6 +91,7 @@ export const useChat = () => {
           ...prev,
           messages: [...prev.messages, assistantMessage],
           isLoading: false,
+          interrupt: null,
         }));
       } catch (error) {
         setState((prev) => ({
@@ -82,12 +102,69 @@ export const useChat = () => {
         }));
       }
     },
-    [state.messages, threadId]
+  [state.interrupt, threadId]
+  );
+
+  // Answer an interrupt prompt without adding it as a chat message
+  const sendInterruptAnswer = useCallback(
+    async (answer: string) => {
+      if (!answer.trim()) return;
+
+  // Clear the interrupt right away so the UI hides the prompt and shows typing
+  setState((prev) => ({ ...prev, isLoading: true, interrupt: null }));
+
+      try {
+        const response = await fetch('/api/graph', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ threadId, message: answer.trim(), mode: 'resume' }),
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to send interrupt answer');
+        }
+
+        if (data.interrupt) {
+          // Chain of interrupts: replace the prompt
+          setState((prev) => ({
+            ...prev,
+            isLoading: false,
+            interrupt: {
+              question: data.message?.content ?? 'I have a clarification question.',
+              options: data.options ?? null,
+            },
+          }));
+          return;
+        }
+
+        const assistantMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          content: data.message.content,
+          timestamp: new Date(),
+        };
+
+  setState((prev) => ({
+          ...prev,
+          messages: [...prev.messages, assistantMessage],
+          isLoading: false,
+          interrupt: null,
+        }));
+      } catch (error) {
+        setState((prev) => ({
+          ...prev,
+          isLoading: false,
+          error: error instanceof Error ? error.message : 'An error occurred',
+        }));
+      }
+    },
+    [threadId]
   );
 
   const clearMessages = useCallback(() => {
-    setState({ messages: [], isLoading: false, error: null });
-    setThreadId(globalThis.crypto?.randomUUID?.() ?? `${Date.now()}`);
+  setState({ messages: [], isLoading: false, error: null, interrupt: null });
+  setThreadId(globalThis.crypto?.randomUUID?.() ?? `${Date.now()}`);
   }, []);
 
   const clearError = useCallback(() => {
@@ -97,6 +174,7 @@ export const useChat = () => {
   return {
     ...state,
     sendMessage,
+  sendInterruptAnswer,
     clearMessages,
     clearError,
   };

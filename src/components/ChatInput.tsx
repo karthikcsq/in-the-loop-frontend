@@ -45,10 +45,10 @@ export const ChatInput = ({ onSendMessage, disabled = false, apiKey, onApiKeyCha
 
   return (
     <div className="relative">
-      <div className="bg-gray-900 border border-gray-700 rounded-3xl p-4">
+      <div className="bg-secondary border border-border rounded-3xl p-4">
         <div className="flex items-center gap-3">
           <button 
-            className="p-2 text-gray-400 hover:text-teal-400 transition-colors"
+            className="p-2 text-muted-foreground hover:text-primary transition-colors"
             onClick={() => {/* Future: file upload */}}
           >
             <Plus size={20} />
@@ -61,9 +61,8 @@ export const ChatInput = ({ onSendMessage, disabled = false, apiKey, onApiKeyCha
               onKeyDown={handleKeyDown}
               placeholder={apiKey ? "Ask anything" : "Add API key to start chatting"}
               disabled={disabled}
-              className="w-full bg-transparent text-white placeholder-gray-400 resize-none 
-                       focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed
-                       min-h-[24px] max-h-32"
+              className="w-full bg-transparent text-foreground placeholder-muted-foreground resize-none 
+                       focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed min-h-[24px] max-h-32 overflow-y-auto no-scrollbar"
               rows={1}
               style={{
                 height: 'auto',
@@ -86,18 +85,18 @@ export const ChatInput = ({ onSendMessage, disabled = false, apiKey, onApiKeyCha
               aria-haspopup="menu"
               aria-expanded={open}
               className={`flex items-center gap-2 rounded-3xl px-4 py-2 border text-sm transition-colors
-                         ${open ? 'border-teal-500' : 'border-gray-700'} bg-gray-900 text-white
-                         hover:border-gray-600 focus:outline-none focus:ring-2 focus:ring-teal-500`}
+                         ${open ? 'border-ring' : 'border-border'} bg-secondary text-foreground
+                         hover:border-input focus:outline-none focus:ring-2 focus:ring-ring`}
               title="Select task type"
             >
               <span>{label}</span>
-              <ChevronDown size={16} className={`text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`} />
+              <ChevronDown size={16} className={`text-muted-foreground transition-transform ${open ? 'rotate-180' : ''}`} />
             </button>
             {open && (
               <div
                 role="menu"
                 aria-label="Task type"
-                className="absolute z-20 mt-2 w-44 rounded-2xl border border-gray-700 bg-gray-900 shadow-xl overflow-hidden"
+                className="absolute z-20 mt-2 w-44 rounded-2xl border border-border bg-secondary shadow-xl overflow-hidden"
               >
                 {(['none', 'essay', 'code'] as const).map((opt) => (
                   <button
@@ -106,10 +105,10 @@ export const ChatInput = ({ onSendMessage, disabled = false, apiKey, onApiKeyCha
                     aria-checked={taskType === opt}
                     onClick={() => { onTaskTypeChange?.(opt); setOpen(false); }}
                     className={`w-full flex items-center justify-between text-left px-4 py-2 text-sm transition-colors
-                               ${taskType === opt ? 'bg-gray-800 text-white' : 'text-gray-200 hover:bg-gray-800 hover:text-white'}`}
+                               ${taskType === opt ? 'bg-accent text-accent-foreground' : 'text-foreground hover:bg-accent hover:text-accent-foreground'}`}
                   >
                     <span>{opt === 'none' ? 'None' : opt === 'essay' ? 'Essay' : 'Code'}</span>
-                    {taskType === opt && <Check size={16} className="text-teal-400" />}
+                    {taskType === opt && <Check size={16} className="text-primary" />}
                   </button>
                 ))}
               </div>
@@ -120,10 +119,7 @@ export const ChatInput = ({ onSendMessage, disabled = false, apiKey, onApiKeyCha
             <button
               onClick={handleSubmit}
               disabled={disabled}
-              className="p-2 bg-gradient-to-r from-teal-500 to-cyan-400 text-black rounded-full 
-                       hover:from-teal-400 hover:to-cyan-300 transition-all duration-200
-                       disabled:from-gray-600 disabled:to-gray-500 disabled:text-gray-400 
-                       disabled:cursor-not-allowed shadow-lg shadow-teal-500/25"
+              className="p-2 bg-primary text-primary-foreground rounded-full transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
             >
               <Send size={16} />
             </button>
