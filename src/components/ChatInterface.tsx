@@ -5,7 +5,7 @@ import { useChat } from '@/hooks/useChat';
 import { Message } from '@/components/Message';
 import { TypingIndicator } from '@/components/TypingIndicator';
 import { ChatInput } from '@/components/ChatInput';
-import { AlertCircle, Key, Settings } from 'lucide-react';
+import { AlertCircle, Key, Settings, Plus } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -23,6 +23,7 @@ export const ChatInterface = () => {
   const [isApiDialogOpen, setIsApiDialogOpen] = useState(false);
   const { messages, isLoading, error, sendMessage, clearMessages, clearError } = useChat();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [taskType, setTaskType] = useState<'none' | 'essay' | 'code'>('none');
 
   // Load API key from localStorage on mount
   useEffect(() => {
@@ -65,7 +66,7 @@ export const ChatInterface = () => {
       setIsApiDialogOpen(true);
       return;
     }
-    await sendMessage(message, apiKey);
+    await sendMessage(message, apiKey, taskType);
   };
 
   const handleThemeToggle = () => {
@@ -91,65 +92,78 @@ export const ChatInterface = () => {
             In The Loop
           </h1>
           
-          <Dialog open={isApiDialogOpen} onOpenChange={setIsApiDialogOpen}>
-            <DialogTrigger asChild>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={handleOpenApiDialog}
-                className="bg-gray-900 border-gray-700 text-white hover:bg-gray-800 hover:text-white"
-              >
-                <Settings size={16} className="mr-2" />
-                Add API Keys
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-md bg-gray-900 border-gray-700">
-              <DialogHeader>
-                <DialogTitle className="text-white">OpenAI API Key</DialogTitle>
-                <DialogDescription className="text-gray-400">
-                  Enter your OpenAI API key to start chatting with the AI.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4">
-                <input
-                  type="password"
-                  value={tempApiKey}
-                  onChange={(e) => setTempApiKey(e.target.value)}
-                  placeholder="Enter your OpenAI API key (sk-...)"
-                  className="w-full bg-black border border-gray-700 rounded-lg px-4 py-3 text-white 
-                           placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 
-                           focus:border-teal-400"
-                />
-                <p className="text-sm text-gray-400">
-                  Get your API key from{' '}
-                  <a 
-                    href="https://platform.openai.com/api-keys" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-teal-400 hover:text-teal-300 hover:underline"
-                  >
-                    OpenAI Platform
-                  </a>
-                </p>
-                <div className="flex gap-2 justify-end">
-                  <Button 
-                    variant="outline" 
-                    onClick={() => setIsApiDialogOpen(false)}
-                    className="bg-gray-800 border-gray-600 text-white hover:bg-gray-700"
-                  >
-                    Cancel
-                  </Button>
-                  <Button 
-                    onClick={handleSaveApiKey}
-                    disabled={!tempApiKey.trim()}
-                    className="bg-teal-600 hover:bg-teal-700 text-white disabled:bg-gray-600"
-                  >
-                    Save
-                  </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => { clearMessages(); setTaskType('none'); }}
+              className="bg-gray-900 border-gray-700 text-white hover:bg-gray-800 hover:text-white"
+              title="Start a new chat thread"
+            >
+              <Plus size={16} className="mr-2" />
+              New Chat
+            </Button>
+
+            <Dialog open={isApiDialogOpen} onOpenChange={setIsApiDialogOpen}>
+              <DialogTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={handleOpenApiDialog}
+                  className="bg-gray-900 border-gray-700 text-white hover:bg-gray-800 hover:text-white"
+                >
+                  <Settings size={16} className="mr-2" />
+                  Add API Keys
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md bg-gray-900 border-gray-700">
+                <DialogHeader>
+                  <DialogTitle className="text-white">OpenAI API Key</DialogTitle>
+                  <DialogDescription className="text-gray-400">
+                    Enter your OpenAI API key to start chatting with the AI.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <input
+                    type="password"
+                    value={tempApiKey}
+                    onChange={(e) => setTempApiKey(e.target.value)}
+                    placeholder="Enter your OpenAI API key (sk-...)"
+                    className="w-full bg-black border border-gray-700 rounded-lg px-4 py-3 text-white 
+                             placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 
+                             focus:border-teal-400"
+                  />
+                  <p className="text-sm text-gray-400">
+                    Get your API key from{' '}
+                    <a 
+                      href="https://platform.openai.com/api-keys" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-teal-400 hover:text-teal-300 hover:underline"
+                    >
+                      OpenAI Platform
+                    </a>
+                  </p>
+                  <div className="flex gap-2 justify-end">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setIsApiDialogOpen(false)}
+                      className="bg-gray-800 border-gray-600 text-white hover:bg-gray-700"
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      onClick={handleSaveApiKey}
+                      disabled={!tempApiKey.trim()}
+                      className="bg-teal-600 hover:bg-teal-700 text-white disabled:bg-gray-600"
+                    >
+                      Save
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            </DialogContent>
-          </Dialog>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
       </div>
       
@@ -185,6 +199,8 @@ export const ChatInterface = () => {
                 disabled={isLoading}
                 apiKey={apiKey}
                 onApiKeyChange={setApiKey}
+                taskType={taskType}
+                onTaskTypeChange={setTaskType}
               />
             </div>
           </div>
@@ -210,6 +226,8 @@ export const ChatInterface = () => {
               disabled={isLoading}
               apiKey={apiKey}
               onApiKeyChange={setApiKey}
+              taskType={taskType}
+              onTaskTypeChange={setTaskType}
             />
           </div>
         </div>

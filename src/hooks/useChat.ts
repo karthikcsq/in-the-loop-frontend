@@ -11,11 +11,13 @@ export const useChat = () => {
   const [threadId, setThreadId] = useState<string>(
     () => (globalThis.crypto?.randomUUID?.() ?? `${Date.now()}`)
   );
-  // Default task type; could be switched by UI later
-  const [taskType] = useState<string>('essay');
 
   const sendMessage = useCallback(
-    async (content: string, apiKey?: string) => {
+    async (
+      content: string,
+      apiKey?: string,
+      taskType?: 'none' | 'essay' | 'code'
+    ) => {
       if (!content.trim()) return;
 
       const userMessage: Message = {
@@ -36,15 +38,21 @@ export const useChat = () => {
       const mode = state.messages.length === 0 ? 'start' : 'resume';
 
       try {
+        const body: any = {
+          threadId,
+          message: userMessage.content,
+          mode,
+        };
+        if (mode === 'start') {
+          // Only send taskType on the first message; omit if 'none'
+          const t = taskType && taskType !== 'none' ? taskType : undefined;
+          if (t) body.taskType = t;
+        }
+
         const response = await fetch('/api/graph', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            threadId,
-            message: userMessage.content,
-            mode,
-            taskType: mode === 'start' ? taskType : undefined,
-          }),
+          body: JSON.stringify(body),
         });
 
         const data = await response.json();
@@ -74,7 +82,7 @@ export const useChat = () => {
         }));
       }
     },
-    [state.messages, threadId, taskType]
+    [state.messages, threadId]
   );
 
   const clearMessages = useCallback(() => {
