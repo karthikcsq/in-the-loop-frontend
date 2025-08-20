@@ -1,4 +1,6 @@
 import { Message as MessageType } from '@/types/chat';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface MessageProps {
   message: MessageType;
@@ -28,8 +30,10 @@ export const Message = ({ message }: MessageProps) => {
         <div className="border-t border-border mx-4 my-4"></div>
         <div className="px-4 py-3">
           <div className="text-foreground/90 leading-relaxed">
-            <div className="whitespace-pre-wrap break-words">
-              {message.content}
+            <div className="prose prose-invert dark:prose-invert max-w-none prose-pre:bg-secondary prose-pre:text-foreground prose-code:before:content-[''] prose-code:after:content-['']">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {message.content}
+              </ReactMarkdown>
             </div>
           </div>
         </div>

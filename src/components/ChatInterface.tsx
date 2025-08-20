@@ -5,7 +5,7 @@ import { useChat } from '@/hooks/useChat';
 import { Message } from '@/components/Message';
 import { TypingIndicator } from '@/components/TypingIndicator';
 import { ChatInput } from '@/components/ChatInput';
-import { AlertCircle, Key, Settings, Plus } from 'lucide-react';
+import { AlertCircle, Key, Settings, Plus, Sun, Moon } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -169,6 +169,20 @@ export const ChatInterface = () => {
                 </div>
               </DialogContent>
             </Dialog>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleThemeToggle}
+              className="bg-secondary border-border text-foreground hover:bg-accent hover:text-accent-foreground"
+              title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
+            >
+              {theme === 'dark' ? (
+                <Sun size={16} />
+              ) : (
+                <Moon size={16} />
+              )}            
+              </Button>
           </div>
         </div>
       </div>
@@ -223,27 +237,48 @@ export const ChatInterface = () => {
                   <div>
                     <div className="rounded-2xl border border-border bg-card p-4">
                       <div className="text-foreground mb-3 whitespace-pre-wrap">{interrupt.question}</div>
-                      {interrupt.options && interrupt.options.length > 0 && (
-                        <div className="flex flex-wrap gap-2">
-                          {interrupt.options.map((opt) => (
-                            <button
-                              key={opt}
-                              onClick={() => handleAnswerInterrupt(opt)}
-                              className="px-3 py-1.5 rounded-full border border-input text-foreground hover:bg-accent hover:text-accent-foreground"
-                            >
-                              {opt}
-                            </button>
-                          ))}
-                        </div>
+                      {interrupt.options && (
+                        Array.isArray(interrupt.options) ? (
+                          interrupt.options.length > 0 && (
+                            <div className="flex flex-wrap gap-2">
+                              {interrupt.options.map((opt) => (
+                                <button
+                                  key={opt}
+                                  onClick={() => handleAnswerInterrupt(opt)}
+                                  className="px-3 py-1.5 rounded-full border border-input text-foreground hover:bg-accent hover:text-accent-foreground"
+                                >
+                                  {opt}
+                                </button>
+                              ))}
+                            </div>
+                          )
+                        ) : (
+                          // options is a record of label -> description
+                          Object.keys(interrupt.options as Record<string, string>).length > 0 && (
+                            <div className="flex flex-col gap-2">
+                              {Object.entries(interrupt.options as Record<string, string>).map(([label, desc]) => (
+                                <button
+                                  key={label}
+                                  onClick={() => handleAnswerInterrupt(label)}
+                                  className="text-left px-3 py-2 rounded-lg border border-input text-foreground hover:bg-accent hover:text-accent-foreground"
+                                  title={desc}
+                                >
+                                  <div className="font-medium">{label}</div>
+                                  {desc ? (
+                                    <div className="text-sm text-muted-foreground">{desc}</div>
+                                  ) : null}
+                                </button>
+                              ))}
+                            </div>
+                          )
+                        )
                       )}
                     </div>
                   </div>
                   {/* Answer input on the right */}
                   <div className="justify-self-end w-full">
                     <div className="max-w-md ml-auto">
-                      {!interrupt.options || interrupt.options.length === 0 ? (
-                        <InlineAnswer onSubmit={handleAnswerInterrupt} disabled={isLoading} />
-                      ) : null}
+                      <InlineAnswer onSubmit={handleAnswerInterrupt} disabled={isLoading} />
                     </div>
                   </div>
                 </div>

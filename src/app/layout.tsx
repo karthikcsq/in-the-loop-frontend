@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ChatGPT Clone",
-  description: "A ChatGPT interface clone powered by OpenAI API",
+  title: "InTheLoop",
+  description: "An AI that doesn't assume.",
 };
 
 export default function RootLayout({

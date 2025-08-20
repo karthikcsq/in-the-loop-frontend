@@ -7,7 +7,8 @@ export interface Message {
 
 export interface InterruptPrompt {
   question: string;
-  options?: string[] | null;
+  // Options can be a simple array of strings (legacy) or a map of label -> description
+  options?: string[] | Record<string, string> | null;
 }
 
 export interface ChatState {

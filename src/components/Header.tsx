@@ -18,7 +18,7 @@ export const Header = ({ onClearMessages, hasMessages, theme, onThemeToggle }: H
           </div>
           <div>
             <h1 className="text-lg font-semibold text-gray-100">
-              ChatGPT Clone
+              InTheLoop
             </h1>
             <p className="text-sm text-gray-400">
               Powered by OpenAI API
