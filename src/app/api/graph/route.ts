@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const PY_BACKEND_URL = process.env.PY_BACKEND_URL || 'http://127.0.0.1:8000';
+const PY_BACKEND_URL = process.env.DEV ? 'http://127.0.0.1:8000' : 'https://in-the-loop-python.onrender.com/';
 
 export async function POST(request: NextRequest) {
   try {
