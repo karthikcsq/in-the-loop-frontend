@@ -5,7 +5,7 @@ import { useChat } from '@/hooks/useChat';
 import { Message } from '@/components/Message';
 import { TypingIndicator } from '@/components/TypingIndicator';
 import { ChatInput } from '@/components/ChatInput';
-import { AlertCircle, Key, Settings, Plus, Sun, Moon } from 'lucide-react';
+import { AlertCircle, Settings, Plus, Sun, Moon } from 'lucide-react';
 import {
   Dialog,
   DialogContent,

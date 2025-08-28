@@ -1,6 +1,5 @@
 import { useState, KeyboardEvent, useEffect, useRef } from 'react';
 import { Send, Plus, ChevronDown, Check } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 
 interface ChatInputProps {
   onSendMessage: (message: string, taskType?: 'none' | 'essay' | 'code') => void;
@@ -11,7 +10,7 @@ interface ChatInputProps {
   onTaskTypeChange?: (t: 'none' | 'essay' | 'code') => void;
 }
 
-export const ChatInput = ({ onSendMessage, disabled = false, apiKey, onApiKeyChange, taskType = 'none', onTaskTypeChange }: ChatInputProps) => {
+export const ChatInput = ({ onSendMessage, disabled = false, apiKey, taskType = 'none', onTaskTypeChange }: ChatInputProps) => {
   const [message, setMessage] = useState('');
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement | null>(null);

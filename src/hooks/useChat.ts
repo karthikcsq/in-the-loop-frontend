@@ -1,5 +1,34 @@
 import { useState, useCallback } from 'react';
-import { Message, ChatState } from '@/types/chat';
+import { Message, ChatState, InterruptPrompt } from '@/types/chat';
+
+// Types for API payloads and responses
+type Mode = 'start' | 'resume';
+type TaskType = 'none' | 'essay' | 'code';
+
+type StartRequest = {
+  threadId: string;
+  message: string;
+  mode: 'start';
+  taskType?: Exclude<TaskType, 'none'>;
+};
+
+type ResumeRequest = {
+  threadId: string;
+  message: string;
+  mode: 'resume';
+};
+
+type GraphRequestBody = StartRequest | ResumeRequest;
+
+type ApiAssistantMessage = { role: 'assistant'; content: string };
+type InterruptResponse = {
+  message: ApiAssistantMessage;
+  interrupt: true;
+  options: InterruptPrompt['options'];
+};
+type FinalResponse = { message: ApiAssistantMessage; interrupt: false };
+type ErrorResponse = { error: string };
+type GraphResponse = InterruptResponse | FinalResponse | ErrorResponse;
 
 export const useChat = () => {
   const [state, setState] = useState<ChatState>({
@@ -17,7 +46,7 @@ export const useChat = () => {
     async (
       content: string,
       apiKey?: string,
-      taskType?: 'none' | 'essay' | 'code'
+      taskType?: TaskType
     ) => {
       if (!content.trim()) return;
 
@@ -28,11 +57,11 @@ export const useChat = () => {
         timestamp: new Date(),
       };
 
-  // Decide if this starts a new graph run or resumes an interrupt
-  const mode = state.interrupt ? 'resume' : 'start';
+      // Decide if this starts a new graph run or resumes an interrupt
+      const mode: Mode = state.interrupt ? 'resume' : 'start';
 
-  // Determine the thread id to send for this request (reuse existing thread unless user starts a New Chat)
-  let currentThreadId = threadId;
+      // Determine the thread id to send for this request (reuse existing thread unless user starts a New Chat)
+      // let currentThreadId = threadId;
 
       // Mark run as active
       setState((prev) => ({
@@ -43,15 +72,17 @@ export const useChat = () => {
       }));
 
       try {
-        const body: any = {
-          threadId: currentThreadId,
+        let body: GraphRequestBody = {
+          threadId: threadId,
           message: userMessage.content,
           mode,
         };
-  if (mode === 'start') {
+        if (mode === 'start') {
           // Only send taskType on the first message; omit if 'none'
           const t = taskType && taskType !== 'none' ? taskType : undefined;
-          if (t) body.taskType = t;
+          if (t) {
+            body = { ...(body as StartRequest), taskType: t };
+          }
         }
 
         const response = await fetch('/api/graph', {
@@ -60,14 +91,15 @@ export const useChat = () => {
           body: JSON.stringify(body),
         });
 
-        const data = await response.json();
+        const data = (await response.json()) as GraphResponse;
 
         if (!response.ok) {
-          throw new Error(data.error || 'Failed to send message');
+          const errMsg = 'error' in data ? data.error : undefined;
+          throw new Error(errMsg || 'Failed to send message');
         }
 
         // If backend asks an interrupt question, show transient prompt instead of adding a message
-        if (data.interrupt) {
+        if ('interrupt' in data && data.interrupt) {
           setState((prev) => ({
             ...prev,
             isLoading: false,
@@ -83,7 +115,7 @@ export const useChat = () => {
         const assistantMessage: Message = {
           id: (Date.now() + 1).toString(),
           role: 'assistant',
-          content: data.message.content,
+          content: 'message' in data ? data.message.content : '',
           timestamp: new Date(),
         };
 
@@ -102,7 +134,7 @@ export const useChat = () => {
         }));
       }
     },
-  [state.interrupt, threadId]
+    [state.interrupt, threadId]
   );
 
   // Answer an interrupt prompt without adding it as a chat message
@@ -110,8 +142,8 @@ export const useChat = () => {
     async (answer: string) => {
       if (!answer.trim()) return;
 
-  // Clear the interrupt right away so the UI hides the prompt and shows typing
-  setState((prev) => ({ ...prev, isLoading: true, interrupt: null }));
+      // Clear the interrupt right away so the UI hides the prompt and shows typing
+      setState((prev) => ({ ...prev, isLoading: true, interrupt: null }));
 
       try {
         const response = await fetch('/api/graph', {
@@ -120,12 +152,12 @@ export const useChat = () => {
           body: JSON.stringify({ threadId, message: answer.trim(), mode: 'resume' }),
         });
 
-        const data = await response.json();
+        const data = (await response.json()) as GraphResponse;
         if (!response.ok) {
-          throw new Error(data.error || 'Failed to send interrupt answer');
+          throw new Error(('error' in data && data.error) || 'Failed to send interrupt answer');
         }
 
-        if (data.interrupt) {
+        if ('interrupt' in data && data.interrupt) {
           // Chain of interrupts: replace the prompt
           setState((prev) => ({
             ...prev,
@@ -141,11 +173,11 @@ export const useChat = () => {
         const assistantMessage: Message = {
           id: (Date.now() + 1).toString(),
           role: 'assistant',
-          content: data.message.content,
+          content: 'message' in data ? data.message.content : '',
           timestamp: new Date(),
         };
 
-  setState((prev) => ({
+        setState((prev) => ({
           ...prev,
           messages: [...prev.messages, assistantMessage],
           isLoading: false,
@@ -163,8 +195,8 @@ export const useChat = () => {
   );
 
   const clearMessages = useCallback(() => {
-  setState({ messages: [], isLoading: false, error: null, interrupt: null });
-  setThreadId(globalThis.crypto?.randomUUID?.() ?? `${Date.now()}`);
+    setState({ messages: [], isLoading: false, error: null, interrupt: null });
+    setThreadId(globalThis.crypto?.randomUUID?.() ?? `${Date.now()}`);
   }, []);
 
   const clearError = useCallback(() => {
@@ -174,7 +206,7 @@ export const useChat = () => {
   return {
     ...state,
     sendMessage,
-  sendInterruptAnswer,
+    sendInterruptAnswer,
     clearMessages,
     clearError,
   };

@@ -18,16 +18,19 @@ type PreProps = React.ComponentProps<'pre'> & { dark?: boolean };
 const PreBlock: React.FC<PreProps> = ({ children, dark }) => {
   // Children is typically a single <code> element
   const child = Array.isArray(children) ? children[0] : children;
-  const codeEl = child as React.ReactElement<any> | undefined;
+  const codeEl = child as
+    | React.ReactElement<{ className?: string; children?: React.ReactNode }>
+    | undefined;
   const className: string = (codeEl?.props?.className as string) || '';
   const match = /language-(\w+)/.exec(className);
   const lang = match?.[1] || 'text';
   const codeChildren = codeEl?.props?.children;
-  const codeText = Array.isArray(codeChildren)
-    ? codeChildren.map((c: any) => (typeof c === 'string' ? c : '')).join('')
-    : typeof codeChildren === 'string'
-    ? codeChildren
-    : '';
+  let codeText = '';
+  if (Array.isArray(codeChildren)) {
+    codeText = codeChildren.map((c) => (typeof c === 'string' ? c : '')).join('');
+  } else if (typeof codeChildren === 'string') {
+    codeText = codeChildren;
+  }
 
   return (
     <div className="my-3 overflow-hidden rounded-lg border border-border not-prose">
@@ -47,7 +50,13 @@ const PreBlock: React.FC<PreProps> = ({ children, dark }) => {
       </div>
       <SyntaxHighlighter
         language={lang}
-        style={dark ? (oneDark as any) : (oneLight as any)}
+        style={(() => {
+          type SyntaxHighlighterStyle = React.ComponentProps<typeof SyntaxHighlighter>['style'];
+          const theme: SyntaxHighlighterStyle = dark
+            ? (oneDark as SyntaxHighlighterStyle)
+            : (oneLight as SyntaxHighlighterStyle);
+          return theme;
+        })()}
         PreTag="div"
         customStyle={{ margin: 0, padding: '12px' }}
         codeTagProps={{ style: { fontFamily: 'var(--font-mono)' } }}
@@ -91,9 +100,6 @@ export const Message = ({ message }: MessageProps) => {
   } else {
     // AI messages: Full width text, no right margin, with separator line
     const codeRenderer: CodeComponent = ({ inline, className, children, ...props }) => {
-      const match = /language-(\w+)/.exec(className || '');
-      const lang = match?.[1] || 'text';
-      const code = String(children).replace(/\n$/, '');
       if (inline) {
         return (
           <code className={className} {...props}>
