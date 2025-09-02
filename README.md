@@ -2,6 +2,10 @@
 
 This frontend provides a chat interface that connects to the Python backend exposing a LangGraph agent. It renders a simple conversation view and manages a session (thread) per conversation.
 
+## Deployed URL: https://in-the-loop-ai.vercel.app/
+
+
+## Local Hosting
 ## Prerequisites
 
 - Node.js 18+
